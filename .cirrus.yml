@@ -1,0 +1,75 @@
+task:
+  name: "Sauraj Dumper"
+  skip: $CIRRUS_BRANCH == 'main'
+  auto_cancellation: $CIRRUS_BRANCH == 'autocancel'
+  timeout_in: 120m
+  container:
+      image: ubuntu:latest
+      cpu: 4
+      memory: 16G
+
+  Clone_script:
+        - git clone --depth=1 --single-branch https://github.com/saurajbot/phoenix_firmware_dumper.git
+        - git clone --depth=1 --single-branch https://github.com/noobyysauraj/android_tools
+        - T_CID=$(cat temp/ch_id.txt)
+        - T_CID=$(cat temp/ch_id.txt)
+        - T_MID=$(cat temp/msg_id.txt)
+        - echo "$T_CID" > phoenix_firmware_dumper/.tg_cid
+        - echo "$T_MID" > phoenix_firmware_dumper/.tg_mid
+        - cd phoenix_firmware_dumper
+        - sudo bash setup.sh
+
+  dump_script:
+        -  GITHUB_ORG_NAME="dump-sauraj"
+        -  GITLAB_ORG_NAME="sauraj-dumps"
+        -  GITLAB_USERNAME="ksauraj"
+        -  GITHUB_USERNAME="saurajbot"
+        -  GIT_CONFIG_USERNAME="saurajbot"
+        -  GIT_CONFIG_EMAIL="rommirrorer@gmail.com"
+        -  GIT_GITHUB_TOKEN="${{ secrets.GIT_GITHUB_TOKEN }}"
+        -  GITLAB_TOKEN="${{ secrets.GITLAB_TOKEN }}"
+        -  TG_BOT_TOKEN="${{ secrets.TG_BOT_TOKEN }}"
+        -  TG_CHAT_ID="@saurajdumps"
+        -  GITLAB_HOSTNAME="gitlab.com" ## use 'gitlab.com' by default, or use your own github instance, or any public one
+        -  echo "$GITHUB_ORG_NAME" > .github_orgname
+        -  echo "$GITLAB_HOSTNAME" > .gitlab_instance
+        -  echo "$GIT_GITHUB_TOKEN" > .github_token
+        -  echo "$GITLAB_ORG_NAME" > .gitlab_orgname
+        -  echo "$GITLAB_USERNAME" > .gitlab_username
+        -  echo "$GITHUB_USERNAME" > .github_username
+        -  echo "$GITLAB_TOKEN" > .gitlab_token
+        -  echo "$TG_BOT_TOKEN" > .tg_token
+        -  echo "$TG_CHAT_ID" > .tg_chat
+        -  echo "1297553238" > .tg_chat_id
+        -  export GIT_TOKEN=${{ secrets.GIT_GITHUB_TOKEN }}
+        -  export TG_API=${{ secrets.TG_BOT_TOKEN }}
+        -  #Do Not Edit This
+        -  git config --global user.name "$GIT_CONFIG_USERNAME"
+        -  git config --global user.email "$GIT_CONFIG_EMAIL"
+        -  sed -i s/"DroidDumps@github.com"/"$GIT_CONFIG_EMAIL"/g dumper.sh
+        -  sed -i s/"user.name \"DroidDumps\""/"user.name \"$GIT_CONFIG_USERNAME\""/g dumper.sh
+        -  mkdir -p "$HOME"/dump
+        -  mkdir -p "$HOME"/telegram
+        -  ROM_URL=$(cat ../url.txt)
+        -  sudo bash dumper.sh "$ROM_URL"
+        -  cd ../android_tools
+        -  chmod +x setup.sh
+        -  sudo bash setup.sh
+        -  export GIT_TKN=${{ secrets.GIT_GITHUB_TKN }}
+        -  export TG_API=${{ secrets.TG_BOT_TOKEN }}
+        -  sudo ./tools/dummy_dt.sh /home/runner/work/dumper/dumper/dumped
+
+
+  tmate_script:
+        -  sudo apt-get install tmux tmate -y
+        -  TMATE_SOCK="/tmp/tmate.$RANDOM"
+        -  tmate -S "$TMATE_SOCK" new-session -d
+        -  tmate -S "$TMATE_SOCK" wait tmate-ready
+        -  TMATE_SSH="$(tmate -S $TMATE_SOCK display -p '#{tmate_ssh}')"
+        -  TMATE_WEB="$(tmate -S $TMATE_SOCK display -p '#{tmate_web}')"
+        -  TMATE_WEB_RO="$(tmate -S $TMATE_SOCK display -p '#{tmate_web_ro}')"
+        -  echo "TMATE SESSIONS
+        -  SSH SESSION: ${TMATE_SSH}
+        -  WEB RO SESSION: ${TMATE_WEB_RO}
+        -  WEB RW SESSION: ${TMATE_WEB}"
+
